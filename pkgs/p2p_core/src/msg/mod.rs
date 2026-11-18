@@ -12,6 +12,7 @@ mod bloom;
 mod cfilter;
 mod chainlock;
 mod coinjoin;
+mod compact;
 mod gov;
 mod headers;
 mod headers2;
@@ -31,7 +32,7 @@ use crate::short_id::ShortId;
 use crate::version::ProtocolVersion;
 
 use bitcoin_consensus_encoding as encoding;
-use dash_primitives::{GovObject, GovVote};
+use dash_primitives::{Block, GovObject, GovVote, Transaction};
 use dash_types::type_id::Unencodable;
 
 pub use addr::{Addr, AddrV2Entry, AddrV2Msg, TimestampedAddr};
@@ -40,6 +41,7 @@ pub use bloom::{BloomFlags, FilterAdd, FilterLoad, MerkleBlock, PartialMerkleTre
 pub use cfilter::{CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders, GetCFilters};
 pub use chainlock::ClSig;
 pub use coinjoin::SendDsq;
+pub use compact::{BlockTxn, CmpctBlock, GetBlockTxn, PrefilledTransaction, ShortTxId};
 pub use gov::{GovSync, GovSyncStatusCount};
 pub use headers::{GetHeaders, Headers};
 pub use headers2::{CompressedHeader, GetHeaders2, Headers2};
@@ -75,6 +77,10 @@ define_p2p! {
     GetHeaders(GetHeaders) => GETHEADERS "getheaders" @ 12,
     /// Request block hashes.
     GetBlocks(GetBlocks) => GETBLOCKS "getblocks" @ 9,
+    /// Block data.
+    Block(Block) => BLOCK "block" @ 2,
+    /// Transaction.
+    Tx(Transaction) => TX "tx" @ 21,
     /// Block headers.
     Headers(Headers) => HEADERS "headers" @ 13,
     /// Request compressed block headers.
@@ -99,6 +105,12 @@ define_p2p! {
     QSendRecSigs(QSendRecSigs) => QSENDRECSIGS "qsendrecsigs" @ 145,
     /// BIP152: signal compact block support.
     SendCmpct(SendCmpct) => SENDCMPCT "sendcmpct" @ 20,
+    /// BIP152: compact block.
+    CmpctBlock(CmpctBlock) => CMPCTBLOCK "cmpctblock" @ 4,
+    /// BIP152: request compact block transactions.
+    GetBlockTxn(GetBlockTxn) => GETBLOCKTXN "getblocktxn" @ 10,
+    /// BIP152: compact block transactions.
+    BlockTxn(BlockTxn) => BLOCKTXN "blocktxn" @ 3,
     /// BIP330: transaction reconciliation.
     SendTxRcncl(SendTxRcncl) => SENDTXRCNCL "sendtxrcncl",
     /// BIP37: load bloom filter.
@@ -147,16 +159,6 @@ define_p2p! {
   }
 
   stub {
-    /// Block data.
-    Block => BLOCK "block" @ 2,
-    /// BIP152: compact block transactions.
-    BlockTxn => BLOCKTXN "blocktxn" @ 3,
-    /// BIP152: compact block.
-    CmpctBlock => CMPCTBLOCK "cmpctblock" @ 4,
-    /// BIP152: request compact block transactions.
-    GetBlockTxn => GETBLOCKTXN "getblocktxn" @ 10,
-    /// Transaction.
-    Tx => TX "tx" @ 21,
     /// CoinJoin: accept denomination.
     Dsa => DSA "dsa" @ 131,
     /// CoinJoin: submit inputs.
